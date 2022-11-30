@@ -1,27 +1,26 @@
 from django.shortcuts import render
-# posts/views.py
-from django.shortcuts import render
-# Импортируем модель, чтобы обратиться к ней
-from .models import Post
+from .models import Post, Group
+from django.shortcuts import get_object_or_404
+QUANTITY_POSTS = 10  # Количество элементов списка
+
 
 def index(request):
-    # Одна строка вместо тысячи слов на SQL:
-    # в переменную posts будет сохранена выборка из 10 объектов модели Post,
-    # отсортированных по полю pub_date по убыванию (от больших значений к меньшим)
-    posts = Post.objects.order_by('-pub_date')[:10]
-    # В словаре context отправляем информацию в шаблон
+    posts = Post.objects.select_related('group')[:QUANTITY_POSTS]
     context = {
         'posts': posts,
     }
     return render(request, 'posts/index.html', context)
 
 
-# Страница конкретной группы
 def group_posts(request, slug):
-    template = 'posts/group_list.html'
-    title = 'Здесь будет информация о группах проекта Yatube'
+    """
+    Страница с информацией об публикациях;
+    view-функция принимает параметр slug из path()
+    """
+    group = get_object_or_404(Group, slug=slug)
+    posts = group.posts.select_related('author')[:QUANTITY_POSTS]
     context = {
-        'title' : title,
-        'slug' : slug
+        'group': group,
+        'posts': posts,
     }
-    return render(request, template, context)
+    return render(request, 'posts/group_list.html', context)
